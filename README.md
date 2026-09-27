@@ -9,6 +9,14 @@
 ![Streamlit](https://img.shields.io/badge/UI-Streamlit-FF4B4B?logo=streamlit&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
+### ▶️ [Try the live demo](https://shashan4321.github.io/nl-to-sql-demo/): runs in your browser, no sign-up, no API key
+
+The demo loads the same seeded warehouse, guardrails and evaluation set: pick any of the 32 business
+questions, or try to break the guardrails with `DROP`, `DELETE` or file-read attacks. It runs on
+Pyodide (Python in WebAssembly), which ships SQLite rather than DuckDB, so validated SQL is transpiled
+with sqlglot; `tests/test_browser.py` proves all 32 gold queries return identical results on both engines.
+Free-form English questions need Claude, so they run in the full app below.
+
 > **Business problem.** Sales, finance and ops managers wait days for analysts to answer simple questions like *"Which category grew fastest this year?"*. This agent lets them ask directly, while keeping the database safe: it can only read, never write.
 
 | | |
@@ -88,7 +96,7 @@ Numbers below are computed from the generated data and the test suite; rerun `ma
 | Customers / products / stores | 4,000 / 168 / 27 across India, UAE, Singapore |
 | Period | Jan 2023 to Dec 2025 (1,096 days) |
 | Evaluation questions | 32 gold SQL pairs + 2 refusal cases (all 32 gold queries validated in CI) |
-| Unit tests | 33 (guardrails, agent loop with a scripted fake LLM, result matching) |
+| Unit tests | 66 (guardrails, agent loop with a scripted fake LLM, result matching, DuckDB vs SQLite parity for the browser demo) |
 | Agent execution accuracy | Run `make eval` with your API key; results are written to `evals/REPORT.md`. |
 
 ## Quick start
@@ -100,12 +108,13 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
 cp .env.example .env              # add your ANTHROPIC_API_KEY
 make data                         # builds data/warehouse.duckdb (seeded)
-make test                         # 33 tests, no API key needed
+make test                         # 66 tests, no API key needed
 make app                          # opens the Streamlit UI
 make eval                         # scores the agent on the 34-case eval set
 ```
 
-**Free live demo:** deploy `app.py` on [Streamlit Community Cloud](https://streamlit.io/cloud) and add `ANTHROPIC_API_KEY` under *Settings → Secrets*. The warehouse builds itself on first run.
+**Browser demo (no key):** [shashan4321.github.io/nl-to-sql-demo](https://shashan4321.github.io/nl-to-sql-demo/), source in `demo/`.
+**Full app with Claude:** deploy `app.py` on [Streamlit Community Cloud](https://streamlit.io/cloud) and add `ANTHROPIC_API_KEY` under *Settings → Secrets*. The warehouse builds itself on first run.
 
 ## Project structure
 
