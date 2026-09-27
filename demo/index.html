@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NL-to-SQL Agent Demo</title>
+  <meta name="description" content="Live, in-browser demo of an NL-to-SQL analytics agent: synthetic DuckDB warehouse, sqlglot read-only guardrails and a 32-question evaluation set.">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.css">
+  <style>
+    :root { --bg: #ffffff; --fg: #1f2937; --muted: #6b7280; }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --bg: #0e1117; --fg: #e5e7eb; --muted: #9ca3af; } }
+    :root[data-theme="dark"] { --bg: #0e1117; --fg: #e5e7eb; --muted: #9ca3af; }
+    body { margin: 0; background: var(--bg); color: var(--fg); font-family: system-ui, sans-serif; }
+    #boot { padding: 48px 16px; text-align: center; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div id="root"><div id="boot">Loading Python in your browser (about 20 seconds the first time)...</div></div>
+  <script type="module">
+    import { mount } from "https://cdn.jsdelivr.net/npm/@stlite/browser@1.9.2/build/stlite.js";
+
+    // Source files are served from this repo. BASE can be overridden with ?base=... for local testing.
+    const params = new URLSearchParams(location.search);
+    const BASE = params.get("base") || "https://cdn.jsdelivr.net/gh/Shashan4321/nl-to-sql-analytics-agent@__REF__/";
+    const paths = [
+      "demo/streamlit_demo.py",
+      "src/nl2sql/__init__.py",
+      "src/nl2sql/warehouse.py",
+      "src/nl2sql/guardrails.py",
+      "src/nl2sql/charts.py",
+      "src/nl2sql/browser.py",
+      "evals/questions.yaml",
+    ];
+    const files = Object.fromEntries(paths.map((p) => [p, { url: BASE + p }]));
+
+    mount(
+      {
+        requirements: ["sqlite3", "sqlglot", "plotly", "pyyaml"],
+        entrypoint: "demo/streamlit_demo.py",
+        files,
+      },
+      document.getElementById("root"),
+    );
+  </script>
+</body>
+</html>
