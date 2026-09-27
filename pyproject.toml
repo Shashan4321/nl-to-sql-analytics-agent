@@ -1,0 +1,32 @@
+[project]
+name = "nl2sql-analytics-agent"
+version = "0.1.0"
+description = "Ask business questions in plain English over a sales warehouse (Claude tool use + read-only SQL guardrails)."
+requires-python = ">=3.10"
+dependencies = [
+  "anthropic>=0.40",
+  "duckdb>=1.1",
+  "pandas>=2.1",
+  "numpy>=1.26",
+  "sqlglot>=25",
+  "plotly>=5.20",
+  "pyyaml>=6",
+  "streamlit>=1.38",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "pre-commit>=3"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
