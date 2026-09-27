@@ -8,10 +8,13 @@ is used anywhere in this project.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-import duckdb
 import numpy as np
 import pandas as pd
+
+if TYPE_CHECKING:  # DuckDB is imported lazily so the browser demo (no DuckDB) can use frames()
+    import duckdb
 
 SEED = 42
 START, END = "2023-01-01", "2025-12-31"
@@ -150,7 +153,8 @@ def _fact_sales(
     w = (season * trend * weekend).to_numpy(dtype=float)
     order_dates = rng.choice(dates["date_key"].to_numpy(), n_orders, p=w / w.sum())
 
-    lines = rng.integers(1, 4, n_orders)  # 1-3 lines per order
+    # 1-3 lines per order. intp keeps np.repeat happy on 32-bit WebAssembly (browser demo).
+    lines = rng.integers(1, 4, n_orders).astype(np.intp)
     order_ids = np.repeat(np.arange(1, n_orders + 1), lines)
     n = len(order_ids)
     prod = products.sample(
@@ -185,26 +189,38 @@ def _fact_sales(
 
 def build(db_path: str | Path = "data/warehouse.duckdb") -> Path:
     """Create (or overwrite) the DuckDB warehouse and return its path."""
-    rng = np.random.default_rng(SEED)
+    import duckdb
+
     db_path = Path(db_path)
     db_path.parent.mkdir(parents=True, exist_ok=True)
     if db_path.exists():
         db_path.unlink()
+    con = duckdb.connect(str(db_path))
+    load_into(con)
+    con.close()
+    return db_path
 
+
+def frames() -> dict[str, pd.DataFrame]:
+    """Generate every table of the star schema as DataFrames (same seed, same data)."""
+    rng = np.random.default_rng(SEED)
     dates = _dim_date()
     stores = _dim_store(rng)
     products = _dim_product(rng)
     customers = _dim_customer(rng, stores)
     sales = _fact_sales(rng, dates, stores, products, customers)
-
-    con = duckdb.connect(str(db_path))
-    for name, df in {
+    return {
         "dim_date": dates,
         "dim_store": stores,
         "dim_product": products,
         "dim_customer": customers,
         "fact_sales": sales,
-    }.items():
+    }
+
+
+def load_into(con: duckdb.DuckDBPyConnection) -> None:
+    """Create the star schema in an open DuckDB connection (file-backed or in-memory)."""
+    for name, df in frames().items():
         con.register("tmp_df", df)
         con.execute(f"CREATE TABLE {name} AS SELECT * FROM tmp_df")
         con.unregister("tmp_df")
@@ -215,8 +231,6 @@ def build(db_path: str | Path = "data/warehouse.duckdb") -> Path:
         COMMENT ON COLUMN fact_sales.is_returned IS 'TRUE if returned; exclude for net sales';
         COMMENT ON COLUMN dim_date.fiscal_year IS 'Indian FY (Apr-Mar). FY2025 = Apr-24..Mar-25';
     """)
-    con.close()
-    return db_path
 
 
 if __name__ == "__main__":
