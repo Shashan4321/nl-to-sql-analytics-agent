@@ -1,0 +1,13 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+# Secrets
+.env
+.streamlit/secrets.toml
+# Generated data (rebuild with `make data`)
+data/*.duckdb
+data/*.duckdb.wal
